@@ -1,5 +1,6 @@
 import React from "react";
 import { Draggable } from "react-beautiful-dnd";
+import "../styles.css";
 
 const Item = ({
   item,
@@ -9,46 +10,30 @@ const Item = ({
   draggingItemId,
   selectedItems,
   onSelectItem,
-}) => {
-  return (
-    <Draggable key={item.id} draggableId={item.id} index={index}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          onClick={(e) => {
-            if (!e.shiftKey) {
-              onSelectItem(item.id, columnId);
-            }
-          }}
-          style={{
-            userSelect: "none",
-            padding: 16,
-            margin: "0 0 8px 0",
-            minHeight: "50px",
-            backgroundColor:
-              illegalMove && draggingItemId === item.id
-                ? "red"
-                : selectedItems.some((selected) => selected.itemId === item.id)
-                  ? "lightgreen"
-                  : snapshot.isDragging
-                    ? "#263B4A"
-                    : "#456C86",
-            color: "white",
-            ...provided.draggableProps.style,
-            opacity: selectedItems.some(
-              (selected) => selected.itemId === item.id,
-            )
-              ? 0.5
-              : 1,
-          }}
-        >
-          {item.content}
-        </div>
-      )}
-    </Draggable>
-  );
+}) => (
+  <Draggable key={item.id} draggableId={item.id} index={index}>
+    {(provided, snapshot) => (
+      <div
+        ref={provided.innerRef}
+        {...provided.draggableProps}
+        {...provided.dragHandleProps}
+        className={`item 
+          ${snapshot.isDragging ? "itemDragging" : ""} 
+          ${selectedItems.some((selected) => selected.itemId === item.id) ? "itemSelected" : ""}
+          ${illegalMove && draggingItemId === item.id ? "itemIllegalMove" : ""}
+        `}
+        onClick={(e) => handleItemClick(e, item.id, columnId, onSelectItem)}
+      >
+        {item.content}
+      </div>
+    )}
+  </Draggable>
+);
+
+const handleItemClick = (e, itemId, columnId, onSelectItem) => {
+  if (!e.shiftKey) {
+    onSelectItem(itemId, columnId);
+  }
 };
 
 export default Item;

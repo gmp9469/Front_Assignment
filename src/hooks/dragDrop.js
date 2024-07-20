@@ -1,5 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { initialColumns, isEven } from "../utils/utils";
+
+const COLUMN_1 = "column1";
+const COLUMN_3 = "column3";
 
 const dragDrop = () => {
   const [columns, setColumns] = useState(initialColumns);
@@ -24,11 +27,14 @@ const dragDrop = () => {
   const onDragUpdate = useCallback(
     (update) => {
       const { source, destination } = update;
-      if (!destination) return;
+      if (!destination) {
+        setIllegalMove(false);
+        return;
+      }
 
       if (
-        source.droppableId === "column1" &&
-        destination.droppableId === "column3"
+        source.droppableId === COLUMN_1 &&
+        destination.droppableId === COLUMN_3
       ) {
         setIllegalMove(true);
         return;
@@ -85,8 +91,8 @@ const dragDrop = () => {
       if (!destination) return;
 
       if (
-        source.droppableId === "column1" &&
-        destination.droppableId === "column3"
+        source.droppableId === COLUMN_1 &&
+        destination.droppableId === COLUMN_3
       ) {
         return;
       }
@@ -172,29 +178,26 @@ const dragDrop = () => {
     [columns, selectedItems],
   );
 
-  const onSelectItem = useCallback(
-    (itemId, columnId) => {
-      setSelectedItems((prevSelectedItems) => {
-        const isSelected = prevSelectedItems.some(
-          (selected) => selected.itemId === itemId,
+  const onSelectItem = useCallback((itemId, columnId) => {
+    setSelectedItems((prevSelectedItems) => {
+      const isSelected = prevSelectedItems.some(
+        (selected) => selected.itemId === itemId,
+      );
+      if (isSelected) {
+        return prevSelectedItems.filter(
+          (selected) => selected.itemId !== itemId,
         );
-        if (isSelected) {
-          return prevSelectedItems.filter(
-            (selected) => selected.itemId !== itemId,
-          );
-        } else {
-          if (
-            prevSelectedItems.length > 0 &&
-            prevSelectedItems[0].columnId !== columnId
-          ) {
-            return [{ itemId, columnId }];
-          }
-          return [...prevSelectedItems, { itemId, columnId }];
+      } else {
+        if (
+          prevSelectedItems.length > 0 &&
+          prevSelectedItems[0].columnId !== columnId
+        ) {
+          return [{ itemId, columnId }];
         }
-      });
-    },
-    [setSelectedItems],
-  );
+        return [...prevSelectedItems, { itemId, columnId }];
+      }
+    });
+  }, []);
 
   return {
     columns,

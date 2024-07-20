@@ -1,6 +1,7 @@
 import React from "react";
 import { Droppable } from "react-beautiful-dnd";
 import Item from "./Item";
+import "../styles.css";
 
 const Column = ({
   columnId,
@@ -9,21 +10,16 @@ const Column = ({
   draggingItemId,
   selectedItems,
   onSelectItem,
-}) => {
-  return (
-    <Droppable key={columnId} droppableId={columnId}>
-      {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.droppableProps}
-          style={{
-            background: snapshot.isDraggingOver ? "lightblue" : "lightgrey",
-            padding: 8,
-            width: 250,
-            margin: 8,
-          }}
-        >
-          <h2>{column.name}</h2>
+}) => (
+  <Droppable key={columnId} droppableId={columnId}>
+    {(provided, snapshot) => (
+      <div
+        ref={provided.innerRef}
+        {...provided.droppableProps}
+        className={`column ${snapshot.isDraggingOver ? "columnDraggingOver" : ""}`}
+      >
+        <div className="column-header">{column.name}</div>
+        <div className="column-inner">
           {column.items.map((item, index) => (
             <Item
               key={item.id}
@@ -38,9 +34,9 @@ const Column = ({
           ))}
           {provided.placeholder}
         </div>
-      )}
-    </Droppable>
-  );
-};
+      </div>
+    )}
+  </Droppable>
+);
 
 export default Column;

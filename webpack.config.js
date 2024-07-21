@@ -15,7 +15,7 @@ module.exports = {
     compress: true,
     port: 3000,
     open: true,
-    allowedHosts: "all", // Allow all hosts
+    allowedHosts: "all",
   },
   module: {
     rules: [

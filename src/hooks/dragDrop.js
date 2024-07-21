@@ -32,6 +32,7 @@ const dragDrop = () => {
         return;
       }
 
+      //Prohibiting items from column 1 noving to column 3
       if (
         source.droppableId === COLUMN_1 &&
         destination.droppableId === COLUMN_3
@@ -56,12 +57,43 @@ const dragDrop = () => {
       const lastSelectedItem = movingItems[movingItems.length - 1];
       const lastSelectedIndex = sourceItems.indexOf(lastSelectedItem);
 
-      if (isEven(lastSelectedItem)) {
+      const isEven = (item) => parseInt(item.id.split("-").pop()) % 2 === 0;
+
+      //If last selected item is even, and the destination location is even set to illegal
+      if (
+        isEven(lastSelectedItem) &&
+        selectedItems.length === 1 &&
+        destination.droppableId !== source.droppableId
+      ) {
         const destinationIndex = destination.index;
         const originalDestIndex =
           destinationIndex > lastSelectedIndex
             ? destinationIndex - movingItems.length
             : destinationIndex;
+        let offset = 0;
+        if (destinationIndex > lastSelectedIndex) {
+          offset = 1;
+        }
+        const nextDestItem = destItems[originalDestIndex + offset];
+        /*console.log(
+          `New Check: Dragged item ${lastSelectedItem.id} over item ${nextDestItem ? nextDestItem.id : "none"} + ${destinationIndex} + ${lastSelectedIndex}`,
+        );*/
+
+        if (
+          nextDestItem &&
+          isEven(nextDestItem) &&
+          originalDestIndex + 1 !== destItems.length
+        ) {
+          setIllegalMove(true);
+          return;
+        }
+      } else if (isEven(lastSelectedItem)) {
+        const destinationIndex = destination.index;
+        const originalDestIndex =
+          destinationIndex > lastSelectedIndex
+            ? destinationIndex - movingItems.length
+            : destinationIndex;
+
         const destinationItem =
           destination.droppableId === source.droppableId
             ? sourceItems[originalDestIndex]
@@ -82,18 +114,21 @@ const dragDrop = () => {
     [columns, selectedItems],
   );
 
+  //If invalid destination or illegal move then it returns
   const onDragEnd = useCallback(
     (result) => {
-      setDraggingItemId(null);
-      setIllegalMove(false);
       const { source, destination } = result;
+      if (!destination) {
+        setIllegalMove(false);
+        return;
+      }
 
-      if (!destination) return;
-
+      // Prohibiting items from column 1 moving to column 3
       if (
         source.droppableId === COLUMN_1 &&
         destination.droppableId === COLUMN_3
       ) {
+        setIllegalMove(true);
         return;
       }
 
@@ -110,20 +145,43 @@ const dragDrop = () => {
           )
         : [sourceItems[source.index]];
 
-      if (movingItems.some((item) => !sourceItems.includes(item))) {
-        setSelectedItems([]);
-        return;
-      }
-
       const lastSelectedItem = movingItems[movingItems.length - 1];
       const lastSelectedIndex = sourceItems.indexOf(lastSelectedItem);
 
-      if (isEven(lastSelectedItem)) {
+      const isEven = (item) => parseInt(item.id.split("-").pop()) % 2 === 0;
+
+      //doing even checks again to finalize moves
+      if (
+        isEven(lastSelectedItem) &&
+        selectedItems.length === 1 &&
+        destination.droppableId !== source.droppableId
+      ) {
         const destinationIndex = destination.index;
         const originalDestIndex =
           destinationIndex > lastSelectedIndex
             ? destinationIndex - movingItems.length
             : destinationIndex;
+        let offset = 0;
+        if (destinationIndex > lastSelectedIndex) {
+          offset = 1;
+        }
+        const nextDestItem = destItems[originalDestIndex + offset];
+
+        if (
+          nextDestItem &&
+          isEven(nextDestItem) &&
+          originalDestIndex + 1 !== destItems.length
+        ) {
+          setIllegalMove(true);
+          return;
+        }
+      } else if (isEven(lastSelectedItem)) {
+        const destinationIndex = destination.index;
+        const originalDestIndex =
+          destinationIndex > lastSelectedIndex
+            ? destinationIndex - movingItems.length
+            : destinationIndex;
+
         const destinationItem =
           destination.droppableId === source.droppableId
             ? sourceItems[originalDestIndex]
@@ -134,46 +192,29 @@ const dragDrop = () => {
           isEven(destinationItem) &&
           originalDestIndex !== destItems.length - 1
         ) {
-          setSelectedItems([]);
+          setIllegalMove(true);
           return;
         }
       }
 
-      movingItems.forEach((item) => {
-        const index = sourceItems.indexOf(item);
-        if (index > -1) {
-          sourceItems.splice(index, 1);
-        }
+      // Perform the final update of the columns state
+      const [movedItem] = sourceItems.splice(source.index, 1);
+      destItems.splice(destination.index, 0, movedItem);
+
+      setColumns({
+        ...columns,
+        [source.droppableId]: {
+          ...sourceColumn,
+          items: sourceItems,
+        },
+        [destination.droppableId]: {
+          ...destColumn,
+          items: destItems,
+        },
       });
 
-      if (source.droppableId === destination.droppableId) {
-        movingItems.forEach((item, i) => {
-          sourceItems.splice(destination.index + i, 0, item);
-        });
-        setColumns({
-          ...columns,
-          [source.droppableId]: {
-            ...sourceColumn,
-            items: sourceItems,
-          },
-        });
-      } else {
-        movingItems.forEach((item, i) => {
-          destItems.splice(destination.index + i, 0, item);
-        });
-        setColumns({
-          ...columns,
-          [source.droppableId]: {
-            ...sourceColumn,
-            items: sourceItems,
-          },
-          [destination.droppableId]: {
-            ...destColumn,
-            items: destItems,
-          },
-        });
-      }
       setSelectedItems([]);
+      setIllegalMove(false);
     },
     [columns, selectedItems],
   );
@@ -188,6 +229,7 @@ const dragDrop = () => {
           (selected) => selected.itemId !== itemId,
         );
       } else {
+        //Cannot select items from multiple columns
         if (
           prevSelectedItems.length > 0 &&
           prevSelectedItems[0].columnId !== columnId
